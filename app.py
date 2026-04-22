@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -8,84 +7,79 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, r2_score
 
-st.title("Prediksi Hasil Panen Sawit")
+st.title("Prediksi Hasil Panen Kelapa Sawit")
 
-# Membaca dataset
 df = pd.read_csv("dataset_kelapa_sawit_500.csv")
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+rename_dict = {}
+for col in df.columns:
+    new_col = col.replace("_", " ").title()
 
-    # Rename kolom biar rapi
-    rename_dict = {}
-    for col in df.columns:
-        new_col = col.replace("_", " ").title()
+    if "Suhu" in new_col:
+        new_col += " (°C)"
+    elif "Curah Hujan" in new_col:
+        new_col += " (mm)"
+    elif "%" in col or "Persen" in new_col:
+        new_col += " (%)"
 
-        if "Suhu" in new_col:
-            new_col += " (°C)"
-        elif "Curah Hujan" in new_col:
-            new_col += " (mm)"
-        elif "%" in col or "Persen" in new_col:
-            new_col += " (%)"
+    new_col = new_col.replace("Per Ha", "Per Hektar")
+    new_col = new_col.replace("Ha", "Hektar")
 
-        new_col = new_col.replace("Per Ha", "Per Hektar")
-        new_col = new_col.replace("Ha", "Hektar")
+    rename_dict[col] = new_col
 
-        rename_dict[col] = new_col
+df.rename(columns=rename_dict, inplace=True)
 
-    df.rename(columns=rename_dict, inplace=True)
+st.subheader("Dataset")
+st.dataframe(df.head())
 
-    st.subheader("Dataset")
-    st.write(df.head())
+X = df.iloc[:, :-1]
+y = df.iloc[:, -1]
 
-    # Split data
-    X = df.iloc[:, :-1]
-    y = df.iloc[:, -1]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-    # Model
-    model = LinearRegression()
-    model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
 
-    y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
 
-    # Evaluasi
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
+st.subheader("Evaluasi Model")
+st.write(f"MAE: {round(mae, 2)}")
+st.write(f"R² Score: {round(r2, 2)}")
 
-    st.subheader("Evaluasi Model")
-    st.write(f"MAE: {round(mae, 2)}")
-    st.write(f"R2 Score: {round(r2, 2)}")
+sns.set_style("whitegrid")
 
-    sns.set_style("whitegrid")
+st.subheader("Visualisasi 1 - Distribusi Hasil Panen")
+fig1, ax1 = plt.subplots()
+sns.histplot(y, kde=True, ax=ax1)
+ax1.set_title("Distribusi Hasil Panen Sawit")
+ax1.set_xlabel(y.name)
+ax1.set_ylabel("Frekuensi")
+st.pyplot(fig1)
 
-    # Visualisasi 1
-    st.subheader("Distribusi Hasil Panen")
-    fig1, ax1 = plt.subplots()
-    sns.histplot(y, kde=True, ax=ax1)
-    ax1.set_title("Distribusi Hasil Panen Sawit")
-    st.pyplot(fig1)
+st.subheader("Visualisasi 2 - Korelasi Antar Variabel")
+fig2, ax2 = plt.subplots(figsize=(10, 8))
+sns.heatmap(df.corr(), annot=True, fmt=".2f", ax=ax2)
+plt.xticks(rotation=30, ha='right')
+plt.yticks(rotation=0)
+st.pyplot(fig2)
 
-    # Visualisasi 2
-    st.subheader("Korelasi Antar Variabel")
-    fig2, ax2 = plt.subplots(figsize=(10,8))
-    sns.heatmap(df.corr(), annot=True, fmt=".2f", ax=ax2)
-    st.pyplot(fig2)
+st.subheader("Visualisasi 3 - Perbandingan Aktual vs Prediksi")
+fig3, ax3 = plt.subplots()
+ax3.scatter(y_test, y_pred)
 
-    # Visualisasi 3
-    st.subheader("Perbandingan Aktual vs Prediksi")
-    fig3, ax3 = plt.subplots()
-    ax3.scatter(y_test, y_pred)
+ax3.plot(
+    [y_test.min(), y_test.max()],
+    [y_test.min(), y_test.max()],
+    linestyle='--'
+)
 
-    ax3.plot(
-        [y_test.min(), y_test.max()],
-        [y_test.min(), y_test.max()],
-        linestyle='--'
-    )
+ax3.set_xlabel("Nilai Aktual")
+ax3.set_ylabel("Nilai Prediksi")
+ax3.set_title("Perbandingan Aktual vs Prediksi")
 
-    ax3.set_xlabel("Nilai Aktual")
-    ax3.set_ylabel("Nilai Prediksi")
-    st.pyplot(fig3)
+st.pyplot(fig3)
