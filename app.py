@@ -12,6 +12,7 @@ st.title("Prediksi Hasil Panen Kelapa Sawit")
 df = pd.read_csv("dataset_kelapa_sawit_500.csv")
 
 rename_dict = {}
+
 for col in df.columns:
     new_col = col.replace("_", " ").title()
 
@@ -23,7 +24,9 @@ for col in df.columns:
         new_col += " (%)"
 
     new_col = new_col.replace("Per Ha", "Per Hektar")
-    new_col = new_col.replace("Ha", "Hektar")
+
+    if "Hasil Panen" in new_col:
+        new_col = "Hasil Panen (Ton/Hektar)"
 
     rename_dict[col] = new_col
 
@@ -62,7 +65,7 @@ ax1.set_ylabel("Frekuensi")
 st.pyplot(fig1)
 
 st.subheader("Visualisasi 2 - Korelasi Antar Variabel")
-fig2, ax2 = plt.subplots(figsize=(10, 8))
+fig2, ax2 = plt.subplots(figsize=(10,8))
 sns.heatmap(df.corr(), annot=True, fmt=".2f", ax=ax2)
 plt.xticks(rotation=30, ha='right')
 plt.yticks(rotation=0)
