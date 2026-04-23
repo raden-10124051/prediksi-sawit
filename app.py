@@ -84,28 +84,40 @@ ax3.plot(
 ax3.set_xlabel("Nilai Aktual")
 ax3.set_ylabel("Nilai Prediksi")
 ax3.set_title("Perbandingan Aktual vs Prediksi")
-
 st.pyplot(fig3)
 
-st.subheader("Prediksi Manual")
+st.sidebar.header("Simulasi Hasil Panen")
 
 input_data = {}
 
 for col in X.columns:
-    input_data[col] = st.number_input(f"{col}", value=float(X[col].mean()))
+    input_data[col] = st.sidebar.number_input(
+        f"{col}",
+        value=float(X[col].mean())
+    )
 
 input_df = pd.DataFrame([input_data])
 
-if st.button("Prediksi"):
+st.subheader("Simulasi Hasil Panen")
+
+if st.button("Hitung Prediksi"):
     hasil = model.predict(input_df)[0]
 
-    # klasifikasi sederhana
     if hasil < y.quantile(0.33):
         kategori = "Rendah"
+        warna = "error"
     elif hasil < y.quantile(0.66):
         kategori = "Sedang"
+        warna = "warning"
     else:
         kategori = "Tinggi"
+        warna = "success"
 
-    st.write(f"Hasil Prediksi: {round(hasil, 2)} Ton/Hektar")
-    st.write(f"Kategori: {kategori}")
+    st.success(f"Estimasi Hasil Panen: {round(hasil, 2)} Ton/Hektar")
+
+    if warna == "error":
+        st.error(f"Kategori Produksi: {kategori}")
+    elif warna == "warning":
+        st.warning(f"Kategori Produksi: {kategori}")
+    else:
+        st.success(f"Kategori Produksi: {kategori}")
