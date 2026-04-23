@@ -86,3 +86,26 @@ ax3.set_ylabel("Nilai Prediksi")
 ax3.set_title("Perbandingan Aktual vs Prediksi")
 
 st.pyplot(fig3)
+
+st.subheader("Prediksi Manual")
+
+input_data = {}
+
+for col in X.columns:
+    input_data[col] = st.number_input(f"{col}", value=float(X[col].mean()))
+
+input_df = pd.DataFrame([input_data])
+
+if st.button("Prediksi"):
+    hasil = model.predict(input_df)[0]
+
+    # klasifikasi sederhana
+    if hasil < y.quantile(0.33):
+        kategori = "Rendah"
+    elif hasil < y.quantile(0.66):
+        kategori = "Sedang"
+    else:
+        kategori = "Tinggi"
+
+    st.write(f"Hasil Prediksi: {round(hasil, 2)} Ton/Hektar")
+    st.write(f"Kategori: {kategori}")
